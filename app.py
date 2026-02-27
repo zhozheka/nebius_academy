@@ -6,8 +6,8 @@ from typing import Any, Dict
 
 from flask import Flask, jsonify, request
 
-from features import extract_repo_profile
-from llm import get_client, summarize_repo
+from features import build_repo_profile
+from llm import get_client, summarize_repo_with_retries
 from utils import download_repo
 
 app = Flask(__name__)
@@ -30,10 +30,10 @@ def process_repo(github_url: str) -> Dict[str, Any]:
 
     with tempfile.TemporaryDirectory() as tmp_repo_dir:
         download_repo(github_url, tmp_repo_dir)
-        repo_profile = extract_repo_profile(tmp_repo_dir)
+        repo_profile = build_repo_profile(tmp_repo_dir)
 
     print(repo_profile)
-    repo_summary = summarize_repo(client, repo_profile)
+    repo_summary = summarize_repo_with_retries(client, repo_profile)
     return repo_summary.model_dump_json()
 
 
@@ -62,7 +62,7 @@ def summarize_endpoint():
         )
 
     try:
-        result = process_repo(github_url)
+        result = process_repo(github_url.strip())
     except ValueError as e:
         return error_response(str(e), 400)
 
