@@ -1,7 +1,7 @@
 import fnmatch
 import json
 import os
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -16,9 +16,8 @@ from rules import (
     LOCKFILE_NAMES,
     MAX_CHARS_PER_FILE,
     MAX_PRIORITY,
+    MIN_LOC_PER_EXTENSION,
 )
-
-MAX_CHARS_PER_FILE
 
 
 @dataclass(frozen=True)
@@ -48,8 +47,8 @@ def _match_any(relpath: str, patterns: Iterable[str]) -> bool:
 
 
 def get_files_with_priority(
-    repo_path: str, decay_readme: bool = True, max_readmes: int = 20
-) -> list[KeyFile]:
+    repo_path: str, decay_readme: bool = True, max_readmes: int = 40
+) -> deque[KeyFile]:
     n_readmes = 0
     root = Path(repo_path).resolve()
     if not root.exists() or not root.is_dir():
@@ -72,14 +71,16 @@ def get_files_with_priority(
             if p.suffix.lower() in BINARY_EXTS or _sniff_is_binary(p):
                 continue
 
-            if fn == "readme" or fn.startswith("readme.") and decay_readme:
+            if (
+                decay_readme
+                and fn.lower() == "readme"
+                or fn.lower().startswith("readme.")
+            ):
                 n_readmes += 1
-                if n_readmes > max_readmes:
-                    priority = BASE_PRIORITY - depth * DECAY_PER_DEPTH
+                if n_readmes <= max_readmes:
+                    priority = MAX_PRIORITY - depth * DECAY_PER_DEPTH
                 else:
-                    priority = (
-                        MAX_PRIORITY - depth * 25
-                    )  # decay readme priority by depth
+                    priority = BASE_PRIORITY - depth * DECAY_PER_DEPTH
                 files.append(
                     KeyFile(
                         relpath=str(Path(dirpath).relative_to(root) / fn),
@@ -102,11 +103,11 @@ def get_files_with_priority(
                     break
 
             files.append(KeyFile(relpath=rel, abspath=p, priority=priority))
-    return sorted(files, key=lambda k: (-k.priority, k.relpath.lower()))
+    return deque(sorted(files, key=lambda k: (-k.priority, k.relpath.lower())))
 
 
 def get_extension_counter(
-    files: list[KeyFile], prune: bool = True
+    files: deque[KeyFile], prune: bool = True
 ) -> dict[str, dict[str, int]]:
     def _count_loc(p: Path) -> int:
         try:
@@ -124,16 +125,15 @@ def get_extension_counter(
         extension_counter[ext]["files"] += 1
         extension_counter[ext]["loc"] += _count_loc(p)
     if prune:
-        # Remove extensions that only appear once and have very few lines of code (likely not significant for repo profile)
         extension_counter = dict(
             (ext, data)
             for ext, data in extension_counter.items()
-            if data["files"] > 5 and data["loc"] > 0
+            if data["files"] > 1 and data["loc"] > MIN_LOC_PER_EXTENSION
         )
     return extension_counter
 
 
-def get_top_level_directories(repo_dir):
+def get_top_level_directories(repo_dir: str) -> list[dict]:
     tlds = []
     for f in Path(repo_dir).iterdir():
         if f.is_dir():
@@ -144,16 +144,17 @@ def get_top_level_directories(repo_dir):
             tlds.append(
                 {
                     "name": f.name,
+                    "n_files": 1,
                 }
             )
     return tlds
 
 
-def pack_key_files_content(repo_profile, files):
+def pack_key_files_content(repo_profile: dict, files: deque[KeyFile]):
     files_budget = MAX_CHARS - len(json.dumps(repo_profile))
     key_files_content = {}
     while files_budget > 0 and files:
-        kf = files.pop(0)
+        kf = files.popleft()
         try:
             content = kf.abspath.read_text(encoding="utf-8", errors="ignore")[
                 :MAX_CHARS_PER_FILE

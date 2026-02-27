@@ -34,9 +34,20 @@ def download_repo(github_url: str, clone_path: str) -> tuple[str, str]:
     extract_root = Path(clone_path)
 
     # Download (follows GitHub redirect)
-    r = requests.get(
-        zip_url, headers=headers, stream=True, allow_redirects=True, timeout=60
-    )
+    attempts = 3
+    for _ in range(attempts):
+        try:
+            r = requests.get(
+                zip_url, headers=headers, stream=True, allow_redirects=True, timeout=300
+            )
+            if r.status_code == 200:
+                break
+
+        except Exception:
+            continue
+    else:
+        raise RuntimeError("Failed to download repository after multiple attempts.")
+
     if r.status_code != 200:
         raise RuntimeError(f"Download failed ({r.status_code}): {r.text[:300]}")
     with open(zip_path, "wb") as f:

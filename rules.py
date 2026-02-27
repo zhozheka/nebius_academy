@@ -2,7 +2,7 @@ MAX_PRIORITY = 1000
 BASE_PRIORITY = 100
 DECAY_PER_DEPTH = 10
 MAX_CHARS_PER_FILE = 10_000
-
+MIN_LOC_PER_EXTENSION = 50
 
 DEFAULT_IGNORE_DIRS = {
     ".git",
@@ -29,11 +29,10 @@ DEFAULT_IGNORE_DIRS = {
     "vendor",
 }
 
-# Reuse your existing ignore sets if you have them
 LOCKFILE_NAMES = {
     "yarn.lock",
     "package-lock.json",
-    " pnpm-lock.yaml",
+    "pnpm-lock.yaml",
     "composer.lock",
     "Gemfile.lock",
     "Cargo.lock",

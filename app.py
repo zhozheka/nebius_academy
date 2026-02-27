@@ -18,8 +18,6 @@ def error_response(message: str, status_code: int = 400):
 
 
 def process_repo(github_url: str) -> Dict[str, Any]:
-    client = get_client()
-
     with tempfile.TemporaryDirectory() as tmp_repo_dir:
         owner, repo = download_repo(github_url, tmp_repo_dir)
         repo_profile = build_repo_profile(tmp_repo_dir)
@@ -27,7 +25,7 @@ def process_repo(github_url: str) -> Dict[str, Any]:
         repo_profile["repo"] = repo
 
     repo_summary = summarize_repo_with_retries(client, repo_profile)
-    return repo_summary.model_dump_json()
+    return repo_summary.model_dump()
 
 
 @app.post("/summarize")
