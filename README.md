@@ -3,8 +3,8 @@
 
 
 # Model selection
-I use model `Qwen/Qwen3-Coder-480B-A35B-Instruct`.
-I use only one LLM inference during the repository processing, so I need a large context window to get a better result. This model has a larger context with (262K tokens vs 128K for most of the popular models). Also, this model is trained specifically for repo-scale coding and long-context understanding which is crucial in the task.
+I use the model `Qwen/Qwen3-Coder-480B-A35B-Instruct`.
+I use only one LLM inference during repository processing, so I need a large context window for better results. This model has a larger context (262K tokens vs 128K for most popular models) and is trained specifically for repo-scale coding and long-context understanding, which is crucial for this task.
 
 
 # My approach to handling repository contents
