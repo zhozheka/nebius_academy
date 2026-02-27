@@ -180,7 +180,6 @@ def build_repo_profile(repo_dir: str) -> dict:
     top_level_directories = get_top_level_directories(repo_dir)
 
     repo_profile = {
-        "repo_name": Path(repo_dir).name,
         "top_level_directories": top_level_directories,
         "num_files": len(files),
         "extensions": extension_counter,

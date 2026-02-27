@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import tempfile
 from typing import Any, Dict
 
@@ -60,4 +61,12 @@ def summarize_endpoint():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    parser = argparse.ArgumentParser(description="Run the Flask app.")
+    parser.add_argument(
+        "--host", type=str, default="0.0.0.0", help="Host to run the app on"
+    )
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the app on")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    args = parser.parse_args()
+
+    app.run(host=args.host, port=args.port, debug=args.debug)

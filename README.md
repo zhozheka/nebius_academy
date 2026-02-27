@@ -1,10 +1,21 @@
-# How to install
+# How to install and run
+```
+cd /path/to/venv_repo_summarizer
 
+python3 -m venv .venv_repo_summarizer
 
+source .venv_repo_summarizer/bin/activate
+
+python3 -m pip install -r requirements.txt
+
+export NEBIUS_API_KEY="<YOUR_NEBIUS_API_KEY>"
+
+python3 app.py
+```
 
 # Model selection
 I use the model `Qwen/Qwen3-Coder-480B-A35B-Instruct`.
-I use only one LLM inference during repository processing, so I need a large context window for better results. This model has a larger context (262K tokens vs 128K for most popular models) and is trained specifically for repo-scale coding and long-context understanding, which is crucial for this task.
+Only one LLM inference is used during repository processing, so I need a large context window for better results. This model has a larger context (262K tokens vs 128K for most popular models) and is trained specifically for repo-scale coding and long-context understanding, which is crucial for this task.
 
 
 # My approach to handling repository contents
